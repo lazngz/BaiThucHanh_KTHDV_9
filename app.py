@@ -2,41 +2,34 @@ from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required
 from datetime import datetime
-from model import db, User, Order, OrderItem  # Import các mô hình từ models.py
+from model import db, User, Order, OrderItem  
 
 app = Flask(__name__)
 
-# Cấu hình kết nối cơ sở dữ liệu SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Cấu hình secret key cho JWT
-app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Thay 'your_secret_key' bằng một giá trị an toàn
+app.config['JWT_SECRET_KEY'] = 'your_secret_key' 
 
-db.init_app(app)  # Khởi tạo db với ứng dụng Flask
+db.init_app(app)
 jwt = JWTManager(app)
 
-# Tạo bảng nếu chưa tồn tại
 with app.app_context():
     db.create_all()
 
-# Route để đăng nhập và tạo JWT
 @app.route('/login', methods=['POST'])
 def login():
     username = request.json.get('userName', None)
     password = request.json.get('password', None)
     
-    # Kiểm tra thông tin người dùng
     user = User.query.filter_by(UserName=username).first()
     if user and user.Password == password:
-        # Tạo JWT token
         access_token = create_access_token(identity=username)
         return jsonify(access_token=access_token), 200
     return jsonify(message="Invalid credentials"), 401
 
-# Route để tạo đơn hàng mới
 @app.route('/orders', methods=['POST'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def create_order():
     data = request.get_json()
     
@@ -44,7 +37,7 @@ def create_order():
     customer_email = data['customer_email']
     total_amount = data['total_amount']
     status = data['status']
-    order_items = data['order_items']  # Danh sách các sản phẩm trong đơn hàng
+    order_items = data['order_items']
     
     new_order = Order(
         customer_name=customer_name,
@@ -55,7 +48,6 @@ def create_order():
     db.session.add(new_order)
     db.session.commit()
 
-    # Thêm các sản phẩm vào đơn hàng
     for item in order_items:
         new_order_item = OrderItem(
             order_id=new_order.id,
@@ -70,9 +62,8 @@ def create_order():
 
     return jsonify({"message": "Order created", "order_id": new_order.id}), 201
 
-# Route để lấy tất cả đơn hàng
 @app.route('/orders', methods=['GET'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def get_orders():
     orders = Order.query.all()
     result = []
@@ -88,9 +79,8 @@ def get_orders():
         })
     return jsonify({"orders": result}), 200
 
-# Route để lấy thông tin chi tiết một đơn hàng
 @app.route('/orders/<int:id>', methods=['GET'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def get_order(id):
     order = Order.query.get(id)
     if not order:
@@ -118,9 +108,8 @@ def get_order(id):
         }
     }), 200
 
-# Route để cập nhật trạng thái đơn hàng
 @app.route('/orders/<int:id>', methods=['PUT'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required()
 def update_order(id):
     order = Order.query.get(id)
     if not order:
@@ -133,9 +122,8 @@ def update_order(id):
     
     return jsonify({"message": "Order updated", "order_id": order.id}), 200
 
-# Route để xóa một đơn hàng
 @app.route('/orders/<int:id>', methods=['DELETE'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def delete_order(id):
     order = Order.query.get(id)
     if not order:
@@ -146,9 +134,8 @@ def delete_order(id):
     
     return jsonify({"message": "Order deleted", "order_id": id}), 200
 
-# Route để tạo mặt hàng mới trong đơn hàng
 @app.route('/order_items', methods=['POST'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def create_order_item():
     data = request.get_json()
     
@@ -171,9 +158,8 @@ def create_order_item():
 
     return jsonify({"message": "Order item created", "order_item_id": new_order_item.id}), 201
 
-# Route để lấy danh sách mặt hàng trong đơn hàng
 @app.route('/order_items', methods=['GET'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def get_order_items():
     order_items = OrderItem.query.all()
     result = []
@@ -188,9 +174,8 @@ def get_order_items():
         })
     return jsonify({"order_items": result}), 200
 
-# Route để lấy thông tin chi tiết một mặt hàng
 @app.route('/order_items/<int:id>', methods=['GET'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def get_order_item(id):
     order_item = OrderItem.query.get(id)
     if not order_item:
@@ -208,9 +193,8 @@ def get_order_item(id):
         }
     }), 200
 
-# Route để cập nhật mặt hàng trong đơn hàng
 @app.route('/order_items/<int:id>', methods=['PUT'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required()
 def update_order_item(id):
     order_item = OrderItem.query.get(id)
     if not order_item:
@@ -224,9 +208,8 @@ def update_order_item(id):
     
     return jsonify({"message": "Order item updated", "order_item_id": order_item.id}), 200
 
-# Route để xóa mặt hàng trong đơn hàng
 @app.route('/order_items/<int:id>', methods=['DELETE'])
-@jwt_required()  # Xác thực bằng JWT
+@jwt_required() 
 def delete_order_item(id):
     order_item = OrderItem.query.get(id)
     if not order_item:
@@ -238,4 +221,4 @@ def delete_order_item(id):
     return jsonify({"message": "Order item deleted", "order_item_id": id}), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=5003)

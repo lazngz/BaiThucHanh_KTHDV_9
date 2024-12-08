@@ -3,14 +3,12 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-# Định nghĩa bảng User
 class User(db.Model):
     IdUser = db.Column(db.Integer, primary_key=True, autoincrement=True)
     UserName = db.Column(db.String(255), nullable=False, unique=True)
     Password = db.Column(db.String(255), nullable=False)
     Token = db.Column(db.String(255))
 
-# Định nghĩa bảng Order
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     customer_name = db.Column(db.String(255), nullable=False)
@@ -20,10 +18,8 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Mối quan hệ với bảng OrderItem
     order_items = db.relationship('OrderItem', backref='order', lazy=True)
 
-# Định nghĩa bảng OrderItem
 class OrderItem(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
@@ -33,5 +29,4 @@ class OrderItem(db.Model):
     unit_price = db.Column(db.Numeric(10, 2), nullable=False)
     total_price = db.Column(db.Numeric(10, 2), nullable=False)
 
-    # Khi Order bị xóa, các OrderItem tương ứng cũng sẽ bị xóa theo
     db.ForeignKeyConstraint([order_id], ['order.id'], ondelete='CASCADE')
